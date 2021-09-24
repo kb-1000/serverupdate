@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[scripts]
+main = "main"
+
+[dev-packages]
+pylint = "*"
+jedi = "*"
+autopep8 = "*"
+
+[packages]
+aiohttp = "*"
+pyyaml = "*"
+dbus-next = "*"
+
+[requires]
+python_version = "3.9"

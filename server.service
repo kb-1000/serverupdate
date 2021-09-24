@@ -1,0 +1,15 @@
+[Unit]
+Description={server_description} server
+Wants=network.target
+After=network.target
+
+[Service]
+WorkingDirectory={game_dir}
+ExecStart=java -Xmx2G -jar fabric-server-launch.jar
+KillSignal=SIGINT
+User=pswgdev
+Group=pswgdev
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
