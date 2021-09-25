@@ -9,7 +9,7 @@ path = pathlib.Path(__file__).parent
 context = config.to_dict()
 
 os.makedirs("/etc/systemd/system", exist_ok=True)
-os.makedirs("/etc/polkit-1/rules.d")
+os.makedirs("/etc/polkit-1/rules.d", exist_ok=True)
 
 with open(path / "server.service", "r", encoding="utf-8") as rfp, open(
         f"/etc/systemd/system/{config.server_name}-server.service", "w", encoding="utf-8") as wfp:
