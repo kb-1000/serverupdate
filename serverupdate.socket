@@ -1,0 +1,9 @@
+[Unit]
+Description={server_description} updater socket
+
+[Socket]
+ListenStream={base_dir}/serverupdate/{server_name}.sock
+SocketGroup=www-data
+SocketUser=www-data
+SocketMode=0600
+

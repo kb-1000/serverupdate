@@ -1,7 +1,9 @@
+import argparse
 import datetime
 import os
 import pathlib
 import shutil
+import socket
 import tempfile
 
 import aiohttp.web
@@ -9,10 +11,10 @@ import aiohttp.web
 import configuration
 import restart
 
-config = configuration.read_config()
-os.makedirs(config.game_dir / "updater", exist_ok=True)
-os.makedirs(config.game_dir / "mods", exist_ok=True)
-os.makedirs(config.game_dir / "backups", exist_ok=True)
+parser = argparse.ArgumentParser(description="aiohttp server example")
+parser.add_argument("--path")
+parser.add_argument("--port")
+parser.add_argument("--systemd", action="store_true")
 
 routes = aiohttp.web.RouteTableDef()
 
@@ -48,6 +50,17 @@ async def upload(request: aiohttp.web.Request):
         await restart.start(config)
 
 
-app = aiohttp.web.Application()
-app.add_routes(routes)
-aiohttp.web.run_app(app)
+if __name__ == "__main__":
+    app = aiohttp.web.Application()
+    app.add_routes(routes)
+
+    args = parser.parse_args()
+    config = configuration.read_config()
+    os.makedirs(config.game_dir / "updater", exist_ok=True)
+    os.makedirs(config.game_dir / "mods", exist_ok=True)
+    os.makedirs(config.game_dir / "backups", exist_ok=True)
+
+    sock = None
+    if args.systemd:
+        sock = socket.fromfd(3, socket.AF_UNIX, socket.SOCK_STREAM)
+    aiohttp.web.run_app(app, path=args.path, port=args.port, sock=sock)

@@ -1,15 +1,14 @@
 [Unit]
 Description={server_description} updater
-Wants=network.target
-After=network.target
+Requires={server_name}-serverupdate.socket
 
 [Service]
 WorkingDirectory={base_dir}/serverupdate
-ExecStart={pipenv} run python3 main.py
+ExecStart={pipenv} run python3 main.py --systemd
 KillSignal=SIGINT
 User=pswgdev
 Group=pswgdev
 Restart=on-failure
 
 [Install]
-WantedBy=default.target
+WantedBy=nginx.service
