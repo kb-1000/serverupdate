@@ -7,3 +7,6 @@ SocketGroup=www-data
 SocketUser=www-data
 SocketMode=0600
 
+
+[Install]
+WantedBy=nginx.service

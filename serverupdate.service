@@ -9,6 +9,3 @@ KillSignal=SIGINT
 User=pswgdev
 Group=pswgdev
 Restart=on-failure
-
-[Install]
-WantedBy=nginx.service
