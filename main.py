@@ -7,6 +7,7 @@ import socket
 import tempfile
 
 import aiohttp.web
+import aiohttp_remotes
 
 import configuration
 import restart
@@ -15,6 +16,7 @@ parser = argparse.ArgumentParser(description="aiohttp server example")
 parser.add_argument("--path")
 parser.add_argument("--port")
 parser.add_argument("--systemd", action="store_true")
+parser.add_argument("--aiohttp-remotes", action="store_true")
 
 routes = aiohttp.web.RouteTableDef()
 
@@ -51,10 +53,14 @@ async def upload(request: aiohttp.web.Request):
 
 
 if __name__ == "__main__":
-    app = aiohttp.web.Application()
-    app.add_routes(routes)
-
     args = parser.parse_args()
+
+    async def make_app():
+        app = aiohttp.web.Application()
+        if args.aiohttp_remotes:
+            await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
+        app.add_routes(routes)
+
     config = configuration.read_config()
     os.makedirs(config.game_dir / "updater", exist_ok=True)
     os.makedirs(config.game_dir / "mods", exist_ok=True)
@@ -63,4 +69,4 @@ if __name__ == "__main__":
     sock = None
     if args.systemd:
         sock = socket.fromfd(3, socket.AF_UNIX, socket.SOCK_STREAM)
-    aiohttp.web.run_app(app, path=args.path, port=args.port, sock=sock)
+    aiohttp.web.run_app(make_app(), path=args.path, port=args.port, sock=sock)

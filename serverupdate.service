@@ -1,10 +1,10 @@
 [Unit]
-Description={server_description} updater
+Description={server_description} server updater
 Requires={server_name}-serverupdate.socket
 
 [Service]
 WorkingDirectory={base_dir}/serverupdate
-ExecStart={pipenv} run python3 main.py --systemd
+ExecStart={pipenv} run python3 main.py --systemd --aiohttp-remotes
 KillSignal=SIGINT
 User=pswgdev
 Group=pswgdev

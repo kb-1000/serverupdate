@@ -1,5 +1,5 @@
 [Unit]
-Description={server_description} updater socket
+Description={server_description} server updater socket
 
 [Socket]
 ListenStream={base_dir}/serverupdate/{server_name}.sock
