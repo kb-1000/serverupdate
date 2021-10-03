@@ -60,6 +60,7 @@ if __name__ == "__main__":
         if args.aiohttp_remotes:
             await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
         app.add_routes(routes)
+        return app
 
     config = configuration.read_config()
     os.makedirs(config.game_dir / "updater", exist_ok=True)
