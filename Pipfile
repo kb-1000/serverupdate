@@ -16,6 +16,7 @@ aiohttp = "*"
 aiohttp-remotes = "*"
 pyyaml = "*"
 dbus-next = "*"
+cysystemd = "*"
 
 [requires]
 python_version = "3.9"

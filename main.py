@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import logging
 import os
 import pathlib
 import shutil
@@ -8,30 +9,36 @@ import tempfile
 
 import aiohttp.web
 import aiohttp_remotes
+import cysystemd.journal
 
 import configuration
 import restart
 
 parser = argparse.ArgumentParser(description="aiohttp server example")
 parser.add_argument("--path")
-parser.add_argument("--port")
+parser.add_argument("--port", type=int)
 parser.add_argument("--systemd", action="store_true")
 parser.add_argument("--aiohttp-remotes", action="store_true")
+parser.add_argument("--log-level", default="INFO")
 
 routes = aiohttp.web.RouteTableDef()
+
+logger = logging.getLogger("serverupdate")
 
 
 @routes.post("/")
 async def upload(request: aiohttp.web.Request):
-    # XXX: remove localhost before deploying
-    if request.remote != config.remote_ip and request.remote != '127.0.0.1':
+    if request.remote != config.remote_ip:
+        logger.warning(f"Blocking update request from {request.remote}")
         raise aiohttp.web.HTTPForbidden()
+    logger.info(f"Accepting update request from {request.remote}")
 
     with tempfile.TemporaryDirectory(dir=config.game_dir / "updater") as tmpdir:
         tmpdir = pathlib.Path(tmpdir)
         multipart_reader = await request.multipart()
         file = await multipart_reader.next()
         filename = file.filename
+        logger.info(f"Update file name {filename}")
         if "/" in filename or "\\" in filename or ":" in filename or not config.file_pattern.match(filename):
             raise aiohttp.web.HTTPBadRequest(
                 text=f"Invalid filename: {filename}")
@@ -55,12 +62,21 @@ async def upload(request: aiohttp.web.Request):
 if __name__ == "__main__":
     args = parser.parse_args()
 
+    if args.systemd:
+        handler = cysystemd.journal.JournaldLogHandler()
+    else:
+        handler = logging.StreamHandler()
+
+    logging.basicConfig(level=args.log_level.upper(), handlers=[handler])
+
+
     async def make_app():
         app = aiohttp.web.Application()
         if args.aiohttp_remotes:
             await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
         app.add_routes(routes)
         return app
+
 
     config = configuration.read_config()
     os.makedirs(config.game_dir / "updater", exist_ok=True)
