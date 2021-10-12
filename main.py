@@ -10,9 +10,13 @@ import tempfile
 import aiohttp.web
 import aiohttp_remotes
 import cysystemd.journal
+from dbus_next import BusType
+from dbus_next.aio import MessageBus
 
 import configuration
 import restart
+import systemd_job_wait
+from dbus_util import get_proxy_object
 
 parser = argparse.ArgumentParser(description="aiohttp server example")
 parser.add_argument("--path")
@@ -50,13 +54,13 @@ async def upload(request: aiohttp.web.Request):
             if config.file_pattern.match(file.name):
                 pass
         shutil.move(tmpdir / filename, config.game_dir / "mods" / filename)
-        await restart.stop(config)
+        await restart.stop(request.app["bus"], config)
 
         # Back up the world
         shutil.make_archive(config.game_dir / "backups" / datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"), "zip",
                             root_dir=config.game_dir, base_dir="world")
 
-        await restart.start(config)
+        await restart.start(request.app["bus"], config)
 
 
 if __name__ == "__main__":
@@ -71,10 +75,18 @@ if __name__ == "__main__":
 
 
     async def make_app():
+        bus = MessageBus(bus_type=BusType.SYSTEM)
+        await bus.connect()
+        interface = (
+            await get_proxy_object(bus, "org.freedesktop.systemd1", "/org/freedesktop/systemd1")).get_interface(
+            "org.freedesktop.systemd1.Manager")
+        await systemd_job_wait.setup_job_collector(interface)
         app = aiohttp.web.Application()
+        app.on_shutdown.append(bus.disconnect)
         if args.aiohttp_remotes:
             await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
         app.add_routes(routes)
+        app["bus"] = bus
         return app
 
 
