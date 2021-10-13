@@ -10,6 +10,7 @@ import tempfile
 import aiohttp.web
 import aiohttp_remotes
 import cysystemd.journal
+from aiohttp.web_response import Response
 from dbus_next import BusType
 from dbus_next.aio import MessageBus
 
@@ -54,13 +55,14 @@ async def upload(request: aiohttp.web.Request):
             if config.file_pattern.match(file.name):
                 pass
         shutil.move(tmpdir / filename, config.game_dir / "mods" / filename)
-        await restart.stop(request.app["bus"], config)
+        await restart.stop(request.app["systemd_interface"], config)
 
         # Back up the world
         shutil.make_archive(config.game_dir / "backups" / datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"), "zip",
                             root_dir=config.game_dir, base_dir="world")
 
-        await restart.start(request.app["bus"], config)
+        await restart.start(request.app["systemd_interface"], config)
+        return Response(body="Update finished")
 
 
 if __name__ == "__main__":
@@ -86,7 +88,7 @@ if __name__ == "__main__":
         if args.aiohttp_remotes:
             await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
         app.add_routes(routes)
-        app["bus"] = bus
+        app["systemd_interface"] = interface
         return app
 
 
