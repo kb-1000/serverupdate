@@ -17,8 +17,8 @@ def on_job_removed(job_id: int, job_path: str, primary_unit: str, result: str):
 
 
 async def setup_job_collector(interface: ProxyInterface):
-    await interface.call_Subscribe()
-    interface.on_JobRemoved(on_job_removed)
+    await interface.call_subscribe()
+    interface.on_job_removed(on_job_removed)
 
 
 async def wait_for_job(job_path: str):
