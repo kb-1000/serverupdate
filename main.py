@@ -84,7 +84,7 @@ if __name__ == "__main__":
             "org.freedesktop.systemd1.Manager")
         await systemd_job_wait.setup_job_collector(interface)
         app = aiohttp.web.Application()
-        app.on_shutdown.append(bus.disconnect)
+        app.on_shutdown.append(lambda event: bus.disconnect())
         if args.aiohttp_remotes:
             await aiohttp_remotes.setup(app, aiohttp_remotes.XForwardedRelaxed())
         app.add_routes(routes)
