@@ -47,13 +47,13 @@ async def upload(request: aiohttp.web.Request):
         if "/" in filename or "\\" in filename or ":" in filename or not config.file_pattern.match(filename):
             raise aiohttp.web.HTTPBadRequest(
                 text=f"Invalid filename: {filename}")
-        with open(tmpdir / file.filename, "wb") as fp:
+        with open(tmpdir / filename, "wb") as fp:
             fp.write(await file.read(decode=True))
         if await multipart_reader.next():
             raise aiohttp.web.HTTPBadRequest(text="One file is enough.")
         for file in (config.game_dir / "mods").iterdir():
             if config.file_pattern.match(file.name):
-                pass
+                os.unlink(file)
         shutil.move(tmpdir / filename, config.game_dir / "mods" / filename)
         await restart.stop(request.app["systemd_interface"], config)
 
