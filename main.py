@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import ipaddress
 import logging
 import os
 import pathlib
@@ -31,9 +32,16 @@ routes = aiohttp.web.RouteTableDef()
 logger = logging.getLogger("serverupdate")
 
 
+def ip_matches(ip_a, ip_b):
+    ip_a = ipaddress.ip_address(ip_a)
+    ip_b = ipaddress.ip_address(ip_b)
+
+    return (getattr(ip_a, "ipv4_mapped", None) or ip_a) == (getattr(ip_b, "ipv4_mapped", None) or ip_b)
+
+
 @routes.post("/")
 async def upload(request: aiohttp.web.Request):
-    if request.remote != config.remote_ip:
+    if not ip_matches(request.remote, config.remote_ip):
         logger.warning(f"Blocking update request from {request.remote}")
         raise aiohttp.web.HTTPForbidden()
     logger.info(f"Accepting update request from {request.remote}")
@@ -53,6 +61,7 @@ async def upload(request: aiohttp.web.Request):
             raise aiohttp.web.HTTPBadRequest(text="One file is enough.")
         for file in (config.game_dir / "mods").iterdir():
             if config.file_pattern.match(file.name):
+                logger.info(f"Deleting old file {file}")
                 os.unlink(file)
         shutil.move(tmpdir / filename, config.game_dir / "mods" / filename)
         await restart.stop(request.app["systemd_interface"], config)
